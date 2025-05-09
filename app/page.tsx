@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Shield, Skull } from "lucide-react";
+import { Shield, Skull, Coins } from "lucide-react";
 import { useUserStore } from "@/lib/store";
 
 export default function Home() {
@@ -65,7 +65,7 @@ export default function Home() {
       <Card className="w-full max-w-md border-border bg-card/50 backdrop-blur">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl flex justify-center items-center gap-2">
-            <img src="/fpt.png" alt="Logo" className="h-6" />
+            <Coins className="h-6 w-6 text-primary" />
             Token Ban Demo
           </CardTitle>
         </CardHeader>
@@ -102,8 +102,7 @@ export default function Home() {
                     htmlFor="legitimate"
                     className="flex items-center gap-2 cursor-pointer"
                   >
-                    <Shield className="h-5 w-5 text-green-500" />
-                    <span>A legitimate viewer</span>
+                    <span className="text-green-500">A legitimate viewer</span>
                   </Label>
                 </div>
 
@@ -113,7 +112,6 @@ export default function Home() {
                     htmlFor="pirate"
                     className="flex items-center gap-2 cursor-pointer"
                   >
-                    <Skull className="h-5 w-5 text-destructive" />
                     <span className="font-bold text-destructive">
                       A PIRATE!
                     </span>

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, Play, ShieldAlert, User } from "lucide-react";
+import { Shield, Play, ShieldAlert, User, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/lib/store";
+import router from "next/router";
 
 export default function Header() {
   const pathname = usePathname();
@@ -25,30 +26,31 @@ export default function Header() {
         {/* Logo/Icon (left-aligned) */}
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <img src="/fpt.png" alt="Logo" className="h-10" />
-          <span className="hidden sm:inline-block">Token Ban Stream</span>
+          <span className="hidden sm:inline-block">Piracy Prevention</span>
         </Link>
 
         {/* Streaming player indicator/controls (center) */}
-        <div className="flex items-center gap-2">
-          {pathname === "/player" && (
-            <div className="flex items-center gap-2 bg-muted/50 px-3 py-1 rounded-full text-sm">
-              <Play className="h-4 w-4 text-green-500" />
-              <span className="hidden sm:inline-block">Streaming Active</span>
-            </div>
+        <div className="flex items-center gap-4">
+          {(
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/management">
+                <ShieldAlert className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline-block">SETTINGS</span>
+              </Link>
+            </Button>
+          )}
+           {(
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/player">
+                <ShieldAlert className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline-block">PLAYER</span>
+              </Link>
+            </Button>
           )}
         </div>
 
         {/* Token ban management navigation (right-aligned) */}
         <div className="flex items-center gap-4">
-          {pathname !== "/management" && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/management">
-                <ShieldAlert className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline-block">Management</span>
-              </Link>
-            </Button>
-          )}
-
           {/* Username display (far right) */}
           {username && (
             <div className="flex items-center gap-2 text-sm">
