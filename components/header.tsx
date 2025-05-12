@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, Play, ShieldAlert, User, Home } from "lucide-react";
+import { Shield, Play, ShieldAlert, User, Home, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/lib/store";
 import router from "next/router";
@@ -31,22 +31,18 @@ export default function Header() {
 
         {/* Streaming player indicator/controls (center) */}
         <div className="flex items-center gap-4">
-          {(
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/management">
-                <ShieldAlert className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline-block">SETTINGS</span>
-              </Link>
-            </Button>
-          )}
-           {(
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/player">
-                <ShieldAlert className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline-block">PLAYER</span>
-              </Link>
-            </Button>
-          )}
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/player">
+              <Video className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline-block">PLAYER</span>
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/management">
+              <ShieldAlert className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline-block">SETTINGS</span>
+            </Link>
+          </Button>
         </div>
 
         {/* Token ban management navigation (right-aligned) */}

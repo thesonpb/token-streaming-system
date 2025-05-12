@@ -19,9 +19,9 @@ import {
   User,
   FileText,
   Activity,
-  Download,
   Lock,
-  FileBarChart,
+  Bot,
+  LockOpen,
 } from "lucide-react"
 import { useUserStore, useTokenStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -562,7 +562,7 @@ export default function ManagementPage() {
                         <TableCell className="text-center">
                           <div className="flex justify-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <Download className="h-4 w-4" />
+                              <Bot className="h-4 w-4" />
                               <span className="sr-only">Download</span>
                             </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -570,7 +570,7 @@ export default function ManagementPage() {
                               <span className="sr-only">Lock</span>
                             </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <FileBarChart className="h-4 w-4" />
+                              <LockOpen className="h-4 w-4" />
                               <span className="sr-only">Stats</span>
                             </Button>
                           </div>
