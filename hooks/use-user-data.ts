@@ -2,24 +2,26 @@
 import { useState, useCallback, useEffect } from "react";
 import { AppUser, ApiUserToken, AdminUsersApiResponse } from "@/lib/types"; // Adjust path
 
+const ITEMS_PER_PAGE = 10; // Define items per page
+
 // Helper to transform API data to AppUser
 const transformApiUser = (apiToken: ApiUserToken): AppUser => ({
-  id: apiToken.token, // Use token as the unique ID
+  id: apiToken.token,
   username: apiToken.username,
   apiStatus: apiToken.status,
   hits1m: apiToken.access_count_1m,
-  hits5m: apiToken.access_count_3m,
-  // Initialize missing fields. These can be updated by simulation or other logic.
-  concurrents: 0, // Or fetch/calculate if available elsewhere
-  hits15m: apiToken.access_count_5m,     // Or fetch/calculate if available elsewhere
-  // banned: false,  // Default to not banned
+  hits5m: apiToken.access_count_5m,
+  concurrents: 0,
+  hits15m: 0,
+  banned: false,
+  // Add any other properties your AppUser needs
 });
 
-
 export function useUserData() {
-  const [users, setUsers] = useState<AppUser[]>([]);
+  const [allUsers, setAllUsers] = useState<AppUser[]>([]); // Stores all fetched users
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -33,57 +35,64 @@ export function useUserData() {
 
       if (data.status === 200 && data.tokens) {
         const transformedUsers = data.tokens.map(transformApiUser);
-        setUsers(transformedUsers);
+        setAllUsers(transformedUsers);
+        setCurrentPage(1); // Reset to first page on new fetch
       } else {
         throw new Error("Invalid API response structure or error status");
       }
     } catch (e: any) {
       console.error("Failed to fetch users:", e);
       setError(e.message || "Failed to load user data.");
-      setUsers([]); // Clear users on error
+      setAllUsers([]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Initial fetch when the hook is first used
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Calculate users for the current page
+  const usersOnCurrentPage = allUsers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const totalPages = Math.ceil(allUsers.length / ITEMS_PER_PAGE);
 
   const updateUser = (userId: string, updatedUserData: Partial<AppUser>) => {
-    setUsers((prevUsers) =>
+    setAllUsers((prevUsers) =>
       prevUsers.map((user) => (user.id === userId ? { ...user, ...updatedUserData } : user))
     );
   };
 
-  // const toggleUserBan = (userId: string) => {
-  //   setUsers((prevUsers) =>
-  //     prevUsers.map((user) => (user.id === userId ? { ...user, banned: !user.banned } : user))
-  //   );
-  // };
-
+  // Note: Batch actions will operate on `allUsers` if you want them to affect
+  // users not on the current page, or you can adjust them to only affect usersOnCurrentPage.
+  // For simplicity here, they still modify `allUsers`.
   const batchUserBan = (userIds: string[]) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => (userIds.includes(user.id) ? { ...user, banned: true } : user))
+    setAllUsers((prevUsers) =>
+      prevUsers.map((user) => (userIds.includes(user.id) ? { ...user, apiStatus: "banned" } : user))
     );
   };
 
   const batchUserUnban = (userIds: string[]) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => (userIds.includes(user.id) ? { ...user, banned: false } : user))
+    setAllUsers((prevUsers) =>
+      prevUsers.map((user) => (userIds.includes(user.id) ? { ...user, apiStatus: "ok" } : user))
     );
   };
 
   return {
-    users,
+    users: usersOnCurrentPage, // Return only users for the current page
+    allUsersCount: allUsers.length, // For displaying total items
     isLoading,
     error,
-    fetchUsers, // Expose fetchUsers if you want to manually refresh
+    fetchUsers,
     updateUser,
-    // toggleUserBan,
     batchUserBan,
     batchUserUnban,
+    currentPage,
+    setCurrentPage,
+    totalPages,
   };
 }

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,9 +44,11 @@ import {
 import { useUserStore, useTokenStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/hooks/use-user-data";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ManagementPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const { username } = useUserStore();
   const { tokens, updateToken, toggleBan, batchBan, batchUnban } =
     useTokenStore();
@@ -55,6 +57,7 @@ export default function ManagementPage() {
   // Update how you get data from useUserData
   const {
     users,
+    allUsersCount,
     isLoading: isLoadingUsers, // Renamed for clarity if you have other loading states
     error: usersError,
     fetchUsers, // Get the fetch function
@@ -62,6 +65,9 @@ export default function ManagementPage() {
     // toggleUserBan,
     batchUserBan,
     batchUserUnban,
+    currentPage,
+    setCurrentPage,
+    totalPages,
   } = useUserData();
   const [mounted, setMounted] = useState(false);
   const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
@@ -213,6 +219,126 @@ export default function ManagementPage() {
     }
   }, [isLiveUpdating, tokens, updateToken, users, updateUser, activeTab]);
 
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      setSelectedUsers([]); // Clear selection when changing page
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      setSelectedUsers([]); // Clear selection when changing page
+    }
+  };
+
+  const handleBanUserToken = async (tokenId: string, username: string) => {
+    // Construct the payload as per your API specification
+    const payload = {
+      token: tokenId,
+      token_claim: "access-video", // Placeholder from your image
+      request_useragent: "TestAgent", // Placeholder
+      request_ip: "1.1.1.1", // Placeholder
+      request_hostname: "cdn.test", // Placeholder
+      request_path: "/bad.mp4", // Placeholder
+    };
+
+    try {
+      const response = await fetch("http://localhost:9926/AdminBanToken", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json(); // Try to parse JSON regardless of status for error messages
+
+      if (!response.ok) {
+        // Use message from API if available, otherwise a generic error
+        const errorMessage =
+          responseData?.message ||
+          `Failed to ban token. Status: ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      // API call was successful
+      toast({
+        title: "Token Banned Successfully",
+        description: `Token for user '${username}' has been banned.`,
+        variant: "destructive",
+      });
+
+      updateUser(tokenId, { apiStatus: "banned" });
+    } catch (error: any) {
+      console.error("Error banning token:", error);
+      toast({
+        title: "Error Banning Token",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Add this function inside your ManagementPage component, near handleBanUserToken
+
+  const handleUnbanUserToken = async (
+    tokenId: string,
+    tokenUsername: string
+  ) => {
+    // The payload is the same as for banning, according to your images
+    const payload = {
+      token: tokenId,
+      token_claim: "access-video", // Placeholder, match your actual needs
+      request_useragent: "TestAgent", // Placeholder
+      request_ip: "1.1.1.1", // Placeholder
+      request_hostname: "cdn.test", // Placeholder
+      request_path: "/bad.mp4", // Placeholder
+    };
+
+    try {
+      const response = await fetch("http://localhost:9926/AdminUnbanToken", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (e) {
+        // If body is not JSON or empty
+      }
+
+      if (!response.ok) {
+        const errorMessage =
+          responseData?.message ||
+          `Failed to unban token. Status: ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      toast({
+        title: "Token Unbanned Successfully",
+        description: `Token for user '${tokenUsername}' has been unbanned.`,
+        variant: "default",
+      });
+
+      // Update the local user state to reflect the unban
+      // Assuming "ok" is the status for an active/unbanned token
+      updateUser(tokenId, { apiStatus: "ok" });
+    } catch (error: any) {
+      console.error("Error unbanning token:", error);
+      toast({
+        title: "Error Unbanning Token",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleRefreshUsers = async () => {
     setSelectedUsers([]); // Optionally clear selection on refresh
     await fetchUsers(); // Call the fetchUsers from the hook
@@ -309,12 +435,6 @@ export default function ManagementPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Mitigation Strategy</h1>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-sm py-1.5">
-            <User className="h-4 w-4 mr-1" />
-            Admin: {username}
-          </Badge>
-        </div>
       </div>
 
       <Tabs defaultValue="token" value={activeTab} onValueChange={setActiveTab}>
@@ -670,25 +790,47 @@ export default function ManagementPage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={() =>
+                                alert(`Bot action for ${user.username}`)
+                              } // Placeholder
+                              title="Bot Action"
                             >
                               <Bot className="h-4 w-4" />
-                              <span className="sr-only">Download</span>
+                              <span className="sr-only">Bot Action</span>
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={() =>
+                                handleBanUserToken(user.id, user.username)
+                              }
+                              disabled={user.apiStatus === "banned"} // Disable if already banned
+                              title={
+                                user.apiStatus === "banned"
+                                  ? "Token is already banned"
+                                  : "Ban this user's token"
+                              }
                             >
                               <Lock className="h-4 w-4" />
-                              <span className="sr-only">Lock</span>
+                              <span className="sr-only">Ban Token</span>
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={() =>
+                                handleUnbanUserToken(user.id, user.username)
+                              }
+                              disabled={user.apiStatus !== "banned"} // Enable unban only if currently banned
+                              title={
+                                user.apiStatus !== "banned"
+                                  ? "Token is not banned"
+                                  : "Unban this user's token"
+                              }
                             >
                               <LockOpen className="h-4 w-4" />
-                              <span className="sr-only">Stats</span>
+                              <span className="sr-only">Unban Token</span>
                             </Button>
                           </div>
                         </TableCell>
@@ -697,6 +839,34 @@ export default function ManagementPage() {
                   </TableBody>
                 </Table>
               </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-end space-x-2 py-4">
+                  <div className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    (Total Users: {allUsersCount})
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1 || isLoadingUsers}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages || isLoadingUsers}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
