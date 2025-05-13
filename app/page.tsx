@@ -15,8 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Shield, Skull, Coins } from "lucide-react";
+import { Coins } from "lucide-react";
 import { useUserStore } from "@/lib/store";
 
 export default function Home() {
@@ -50,7 +49,7 @@ export default function Home() {
     }
 
     setUser(name, userType);
-    router.push("/player");
+    router.push("/dashboard");
   };
 
   const handleClear = () => {
@@ -66,13 +65,13 @@ export default function Home() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl flex justify-center items-center gap-2">
             <Coins className="h-6 w-6 text-primary" />
-            Token Ban Demo
+            Token Admin Dashboard
           </CardTitle>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Enter your name</Label>
+              <Label htmlFor="name">Enter username</Label>
               <Input
                 id="name"
                 placeholder="Your name"
@@ -87,44 +86,12 @@ export default function Home() {
                 <p className="text-sm text-destructive">{nameError}</p>
               )}
             </div>
-
-            <div className="space-y-3">
-              <Label>Select user type</Label>
-              <RadioGroup
-                value={userType}
-                onValueChange={(value) =>
-                  setUserType(value as "legitimate" | "pirate")
-                }
-              >
-                <div className="flex items-center space-x-2 border rounded-md p-3 transition-colors hover:bg-accent">
-                  <RadioGroupItem value="legitimate" id="legitimate" />
-                  <Label
-                    htmlFor="legitimate"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <span className="text-green-500">A legitimate viewer</span>
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2 border rounded-md p-3 transition-colors hover:bg-accent">
-                  <RadioGroupItem value="pirate" id="pirate" />
-                  <Label
-                    htmlFor="pirate"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <span className="font-bold text-destructive">
-                      A PIRATE!
-                    </span>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button type="button" variant="outline" onClick={handleClear}>
               CLEAR
             </Button>
-            <Button type="submit">GO TO PLAYER</Button>
+            <Button type="submit">Login</Button>
           </CardFooter>
         </form>
       </Card>

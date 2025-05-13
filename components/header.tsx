@@ -32,15 +32,9 @@ export default function Header() {
         {/* Streaming player indicator/controls (center) */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/player">
-              <Video className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline-block">PLAYER</span>
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
             <Link href="/management">
               <ShieldAlert className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline-block">SETTINGS</span>
+              <span className="hidden sm:inline-block">Dashboard</span>
             </Link>
           </Button>
         </div>
