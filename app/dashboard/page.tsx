@@ -50,7 +50,7 @@ export default function ManagementPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { username } = useUserStore();
-  const { tokens, updateToken, toggleBan, batchBan, batchUnban } =
+  const { tokens, updateToken, toggleBan } =
     useTokenStore();
   // const { users, updateUser, toggleUserBan, batchUserBan, batchUserUnban } = useUserData()
   // const { users, updateUser, batchUserBan, batchUserUnban } = useUserData();
@@ -62,9 +62,6 @@ export default function ManagementPage() {
     error: usersError,
     fetchUsers, // Get the fetch function
     updateUser,
-    // toggleUserBan,
-    batchUserBan,
-    batchUserUnban,
     currentPage,
     setCurrentPage,
     totalPages,
@@ -342,58 +339,6 @@ export default function ManagementPage() {
   const handleRefreshUsers = async () => {
     setSelectedUsers([]); // Optionally clear selection on refresh
     await fetchUsers(); // Call the fetchUsers from the hook
-  };
-
-  const handleSelectToken = (tokenId: string) => {
-    setSelectedTokens((prev) =>
-      prev.includes(tokenId)
-        ? prev.filter((id) => id !== tokenId)
-        : [...prev, tokenId]
-    );
-  };
-
-  const handleSelectUser = (userId: string) => {
-    setSelectedUsers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
-
-  const handleSelectAllTokens = () => {
-    if (selectedTokens.length === tokens.length) {
-      setSelectedTokens([]);
-    } else {
-      setSelectedTokens(tokens.map((token) => token.id));
-    }
-  };
-
-  const handleSelectAllUsers = () => {
-    if (selectedUsers.length === users.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(users.map((user) => user.id));
-    }
-  };
-
-  const handleBatchBan = () => {
-    batchBan(selectedTokens);
-    setSelectedTokens([]);
-  };
-
-  const handleBatchUnban = () => {
-    batchUnban(selectedTokens);
-    setSelectedTokens([]);
-  };
-
-  const handleBatchUserBan = () => {
-    batchUserBan(selectedUsers);
-    setSelectedUsers([]);
-  };
-
-  const handleBatchUserUnban = () => {
-    batchUserUnban(selectedUsers);
-    setSelectedUsers([]);
   };
 
   const toggleLiveUpdates = () => {

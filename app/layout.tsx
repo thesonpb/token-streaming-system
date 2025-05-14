@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Token Streaming System",
+  title: "Token Administration",
   description: "A demonstration of token-based streaming protection",
 }
 

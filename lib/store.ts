@@ -31,8 +31,6 @@ interface TokenState {
   addToken: (token: TokenData) => void
   updateToken: (id: string, updates: Partial<TokenData>) => void
   toggleBan: (id: string) => void
-  batchBan: (ids: string[]) => void
-  batchUnban: (ids: string[]) => void
 }
 
 export interface TokenData {
@@ -101,13 +99,5 @@ export const useTokenStore = create<TokenState>()((set) => ({
   toggleBan: (id) =>
     set((state) => ({
       tokens: state.tokens.map((token) => (token.id === id ? { ...token, banned: !token.banned } : token)),
-    })),
-  batchBan: (ids) =>
-    set((state) => ({
-      tokens: state.tokens.map((token) => (ids.includes(token.id) ? { ...token, banned: true } : token)),
-    })),
-  batchUnban: (ids) =>
-    set((state) => ({
-      tokens: state.tokens.map((token) => (ids.includes(token.id) ? { ...token, banned: false } : token)),
-    })),
+    }))
 }))

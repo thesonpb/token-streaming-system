@@ -13,8 +13,6 @@ const transformApiUser = (apiToken: ApiUserToken): AppUser => ({
   hits5m: apiToken.access_count_5m,
   concurrents: 0,
   hits15m: 0,
-  banned: false,
-  // Add any other properties your AppUser needs
 });
 
 export function useUserData() {
@@ -53,7 +51,6 @@ export function useUserData() {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Calculate users for the current page
   const usersOnCurrentPage = allUsers.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -63,34 +60,19 @@ export function useUserData() {
 
   const updateUser = (userId: string, updatedUserData: Partial<AppUser>) => {
     setAllUsers((prevUsers) =>
-      prevUsers.map((user) => (user.id === userId ? { ...user, ...updatedUserData } : user))
-    );
-  };
-
-  // Note: Batch actions will operate on `allUsers` if you want them to affect
-  // users not on the current page, or you can adjust them to only affect usersOnCurrentPage.
-  // For simplicity here, they still modify `allUsers`.
-  const batchUserBan = (userIds: string[]) => {
-    setAllUsers((prevUsers) =>
-      prevUsers.map((user) => (userIds.includes(user.id) ? { ...user, apiStatus: "banned" } : user))
-    );
-  };
-
-  const batchUserUnban = (userIds: string[]) => {
-    setAllUsers((prevUsers) =>
-      prevUsers.map((user) => (userIds.includes(user.id) ? { ...user, apiStatus: "ok" } : user))
+      prevUsers.map((user) =>
+        user.id === userId ? { ...user, ...updatedUserData } : user
+      )
     );
   };
 
   return {
-    users: usersOnCurrentPage, // Return only users for the current page
-    allUsersCount: allUsers.length, // For displaying total items
+    users: usersOnCurrentPage,
+    allUsersCount: allUsers.length,
     isLoading,
     error,
     fetchUsers,
     updateUser,
-    batchUserBan,
-    batchUserUnban,
     currentPage,
     setCurrentPage,
     totalPages,
