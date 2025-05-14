@@ -465,53 +465,53 @@ export default function ManagementPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tokens.map((token) => (
-                      <TableRow key={token.id} className="group">
+                    {users.map((user) => (
+                      <TableRow key={user.id} className="group">
                         <TableCell className="font-medium">
-                          {token.id}
+                          {user.id}
                         </TableCell>
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(token.concurrents, [3, 5]),
-                            updatedCells[`${token.id}-concurrents`] &&
+                            getStatusColor(user.concurrents, [3, 5]),
+                            updatedCells[`${user.id}-concurrents`] &&
                               "bg-accent"
                           )}
                         >
-                          {token.concurrents}
+                          {user.concurrents}
                         </TableCell>
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(token.hits1m, [10, 20]),
-                            updatedCells[`${token.id}-hits1m`] && "bg-accent"
+                            getStatusColor(user.hits1m, [10, 20]),
+                            updatedCells[`${user.id}-hits1m`] && "bg-accent"
                           )}
                         >
-                          {token.hits1m}
+                          {user.hits1m}
                         </TableCell>
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(token.hits5m, [30, 60]),
-                            updatedCells[`${token.id}-hits5m`] && "bg-accent"
+                            getStatusColor(user.hits5m, [30, 60]),
+                            updatedCells[`${user.id}-hits5m`] && "bg-accent"
                           )}
                         >
-                          {token.hits5m}
+                          {user.hits5m}
                         </TableCell>
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(token.hits15m, [100, 150]),
-                            updatedCells[`${token.id}-hits15m`] && "bg-accent"
+                            getStatusColor(user.hits15m, [100, 150]),
+                            updatedCells[`${user.id}-hits15m`] && "bg-accent"
                           )}
                         >
-                          {token.hits15m}
+                          {user.hits15m}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge
-                            variant={token.banned ? "destructive" : "outline"}
+                            variant={user.apiStatus === "banned" ? "destructive" : "outline"}
                           >
-                            {token.banned ? "Banned" : "Active"}
+                            {user.apiStatus === "banned"  ? "Banned" : "Active"}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -528,9 +528,9 @@ export default function ManagementPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => toggleBan(token.id)}
+                                onClick={() => toggleBan(user.id)}
                               >
-                                {token.banned ? (
+                                {user.apiStatus === "banned"  ? (
                                   <>
                                     <Shield className="h-4 w-4 mr-2" />
                                     <span>Unban Token</span>
