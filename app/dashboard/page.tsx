@@ -40,13 +40,36 @@ import {
   Lock,
   Bot,
   LockOpen,
+  BotOff,
+  SquareDashedBottomCode,
 } from "lucide-react";
 import { useUserStore, useTokenStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/hooks/use-user-data";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { usePolicyData } from "@/hooks/use-policy-data"; // Adjust path to your hook
+import { AppPolicy, PolicyActionStatus } from "@/lib/types"; // Adjust path to your types
+import { Checkbox } from "@/components/ui/checkbox";
 
-export default function ManagementPage() {
+// --- Mock Icons (replace with your actual icon components) ---
+const BotIcon = () => (
+  <span role="img" aria-label="Bot">
+    🤖
+  </span>
+);
+const CrossedOutBotIcon = () => (
+  <span role="img" aria-label="Disabled Bot">
+    🚫🤖
+  </span>
+);
+const DefaultPolicyIcon = () => (
+  <span role="img" aria-label="Settings">
+    ⚙️
+  </span>
+);
+// --- End Mock Icons ---
+
+export default function DashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { username } = useUserStore();
@@ -69,6 +92,15 @@ export default function ManagementPage() {
   );
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  const {
+    policies,
+    allPoliciesCount,
+    isLoading,
+    isRefreshing,
+    error,
+    updatePolicy,
+  } = usePolicyData();
+
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
@@ -79,6 +111,35 @@ export default function ManagementPage() {
       router.push("/");
     }
   }, [mounted, username, router]);
+
+  const handleToggleEnabled = (
+    policyId: string,
+    currentEnabledStatus: boolean
+  ) => {
+    updatePolicy(policyId, { enabled: !currentEnabledStatus });
+    // The actual API call to persist this change should be handled within the updatePolicy
+    // function in your hook if you want to update the backend.
+  };
+
+  const getActionIcon = (status: PolicyActionStatus) => {
+    switch (status) {
+      case "auto_policy_type":
+        return <Bot className="h-4 w-4" />;
+      case "demo_policy_type":
+        return <BotOff className="h-4 w-4" />;
+      case "default_policy_type":
+      default:
+        return <SquareDashedBottomCode className="h-4 w-4" />;
+    }
+  };
+
+  if (isLoading) {
+    return <p>Loading mitigation strategies...</p>;
+  }
+
+  if (error) {
+    return <p>Error loading policies: {error}</p>;
+  }
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -238,7 +299,7 @@ export default function ManagementPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mitigation Strategy</h1>
+        <h1 className="text-3xl  font-bold">Mitigation Strategy</h1>
       </div>
 
       <Tabs defaultValue="token" value={activeTab} onValueChange={setActiveTab}>
@@ -303,9 +364,19 @@ export default function ManagementPage() {
                     />
                     {isLiveUpdating ? "Pause Updates" : "Resume Updates"}
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Refresh Data
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshUsers}
+                    disabled={isLoadingUsers}
+                  >
+                    <RefreshCw
+                      className={cn(
+                        "h-4 w-4 mr-2",
+                        isLoadingUsers && "animate-spin"
+                      )}
+                    />
+                    {isLoadingUsers ? "Refreshing..." : "Refresh Data"}
                   </Button>
                 </div>
               </div>
@@ -388,9 +459,7 @@ export default function ManagementPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => {}}
-                              >
+                              <DropdownMenuItem onClick={() => {}}>
                                 {user.apiStatus === "banned" ? (
                                   <>
                                     <Shield className="h-4 w-4 mr-2" />
@@ -687,18 +756,48 @@ export default function ManagementPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center p-12">
-                <div className="text-center">
-                  <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">
-                    Policy Configuration
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    This tab would contain policy configuration options and
-                    thresholds.
-                  </p>
-                  <Button variant="outline">View Documentation</Button>
-                </div>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Policy ID</TableHead>
+                      <TableHead className="text-center">Policy</TableHead>
+                      <TableHead className="text-center">Enable</TableHead>
+                      <TableHead className="text-center">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {policies.length === 0 && !isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center">
+                          No policies found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      policies.map((policy: AppPolicy) => (
+                        <TableRow key={policy.id}>
+                          <TableCell className="font-medium">
+                            {policy.id}
+                          </TableCell>
+                          <TableCell>{policy.policyDescription}</TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={policy.enabled}
+                              onCheckedChange={() =>
+                                handleToggleEnabled(policy.id, policy.enabled)
+                              }
+                              aria-label={`Enable policy ${policy.id}`}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center flex justify-center">
+                            {/* {getActionIcon(policy.actionStatus)} */}
+                            <Bot className="h-4 w-4" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
