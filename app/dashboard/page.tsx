@@ -50,25 +50,19 @@ export default function ManagementPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { username } = useUserStore();
-  const { tokens, updateToken, toggleBan } =
-    useTokenStore();
-  // const { users, updateUser, toggleUserBan, batchUserBan, batchUserUnban } = useUserData()
-  // const { users, updateUser, batchUserBan, batchUserUnban } = useUserData();
-  // Update how you get data from useUserData
+  const { tokens, updateToken, toggleBan } = useTokenStore();
   const {
     users,
     allUsersCount,
-    isLoading: isLoadingUsers, // Renamed for clarity if you have other loading states
+    isLoading: isLoadingUsers,
     error: usersError,
-    fetchUsers, // Get the fetch function
+    fetchUsers,
     updateUser,
     currentPage,
     setCurrentPage,
     totalPages,
   } = useUserData();
   const [mounted, setMounted] = useState(false);
-  const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("token");
   const [isLiveUpdating, setIsLiveUpdating] = useState(true);
   const [updatedCells, setUpdatedCells] = useState<{ [key: string]: boolean }>(
@@ -82,7 +76,6 @@ export default function ManagementPage() {
     setMounted(true);
   }, []);
 
-  // Redirect if no username
   useEffect(() => {
     if (mounted && !username) {
       router.push("/");
@@ -219,26 +212,23 @@ export default function ManagementPage() {
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      setSelectedUsers([]); // Clear selection when changing page
     }
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      setSelectedUsers([]); // Clear selection when changing page
     }
   };
 
   const handleBanUserToken = async (tokenId: string, username: string) => {
-    // Construct the payload as per your API specification
     const payload = {
       token: tokenId,
-      token_claim: "access-video", // Placeholder from your image
-      request_useragent: "TestAgent", // Placeholder
-      request_ip: "1.1.1.1", // Placeholder
-      request_hostname: "cdn.test", // Placeholder
-      request_path: "/bad.mp4", // Placeholder
+      token_claim: "access-video",
+      request_useragent: "TestAgent",
+      request_ip: "1.1.1.1",
+      request_hostname: "cdn.test",
+      request_path: "/bad.mp4",
     };
 
     try {
@@ -250,10 +240,9 @@ export default function ManagementPage() {
         body: JSON.stringify(payload),
       });
 
-      const responseData = await response.json(); // Try to parse JSON regardless of status for error messages
+      const responseData = await response.json();
 
       if (!response.ok) {
-        // Use message from API if available, otherwise a generic error
         const errorMessage =
           responseData?.message ||
           `Failed to ban token. Status: ${response.status}`;
@@ -337,7 +326,6 @@ export default function ManagementPage() {
   };
 
   const handleRefreshUsers = async () => {
-    setSelectedUsers([]); // Optionally clear selection on refresh
     await fetchUsers(); // Call the fetchUsers from the hook
   };
 
@@ -467,9 +455,7 @@ export default function ManagementPage() {
                   <TableBody>
                     {users.map((user) => (
                       <TableRow key={user.id} className="group">
-                        <TableCell className="font-medium">
-                          {user.id}
-                        </TableCell>
+                        <TableCell className="font-medium">{user.id}</TableCell>
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
@@ -509,9 +495,13 @@ export default function ManagementPage() {
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge
-                            variant={user.apiStatus === "banned" ? "destructive" : "outline"}
+                            variant={
+                              user.apiStatus === "banned"
+                                ? "destructive"
+                                : "outline"
+                            }
                           >
-                            {user.apiStatus === "banned"  ? "Banned" : "Active"}
+                            {user.apiStatus === "banned" ? "Banned" : "Active"}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -530,7 +520,7 @@ export default function ManagementPage() {
                               <DropdownMenuItem
                                 onClick={() => toggleBan(user.id)}
                               >
-                                {user.apiStatus === "banned"  ? (
+                                {user.apiStatus === "banned" ? (
                                   <>
                                     <Shield className="h-4 w-4 mr-2" />
                                     <span>Unban Token</span>
