@@ -50,7 +50,6 @@ export default function ManagementPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { username } = useUserStore();
-  const { tokens, updateToken, toggleBan } = useTokenStore();
   const {
     users,
     allUsersCount,
@@ -69,7 +68,6 @@ export default function ManagementPage() {
     {}
   );
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -81,133 +79,6 @@ export default function ManagementPage() {
       router.push("/");
     }
   }, [mounted, username, router]);
-
-  // Simulate real-time updates
-  useEffect(() => {
-    if (isLiveUpdating) {
-      updateIntervalRef.current = setInterval(() => {
-        const updatedCellsMap: { [key: string]: boolean } = {};
-
-        // Update tokens
-        if (activeTab === "token") {
-          tokens.forEach((token) => {
-            // Randomly decide if this token should be updated
-            if (Math.random() > 0.5) {
-              const updatedToken = { ...token };
-              const updateField = Math.floor(Math.random() * 4);
-
-              // Update a random field
-              switch (updateField) {
-                case 0:
-                  const concurrentDelta = Math.random() > 0.7 ? 1 : -1;
-                  if (updatedToken.concurrents + concurrentDelta >= 1) {
-                    updatedToken.concurrents += concurrentDelta;
-                    updatedCellsMap[`${token.id}-concurrents`] = true;
-                  }
-                  break;
-                case 1:
-                  const hits1mDelta =
-                    Math.floor(Math.random() * 5) *
-                    (Math.random() > 0.7 ? 1 : -1);
-                  if (updatedToken.hits1m + hits1mDelta >= 0) {
-                    updatedToken.hits1m += hits1mDelta;
-                    updatedCellsMap[`${token.id}-hits1m`] = true;
-                  }
-                  break;
-                case 2:
-                  const hits5mDelta =
-                    Math.floor(Math.random() * 10) *
-                    (Math.random() > 0.7 ? 1 : -1);
-                  if (updatedToken.hits5m + hits5mDelta >= 0) {
-                    updatedToken.hits5m += hits5mDelta;
-                    updatedCellsMap[`${token.id}-hits5m`] = true;
-                  }
-                  break;
-                case 3:
-                  const hits15mDelta =
-                    Math.floor(Math.random() * 15) *
-                    (Math.random() > 0.7 ? 1 : -1);
-                  if (updatedToken.hits15m + hits15mDelta >= 0) {
-                    updatedToken.hits15m += hits15mDelta;
-                    updatedCellsMap[`${token.id}-hits15m`] = true;
-                  }
-                  break;
-              }
-
-              // Update the token in the store
-              updateToken(token.id, updatedToken);
-            }
-          });
-        }
-
-        // Update users
-        if (activeTab === "user") {
-          users.forEach((user) => {
-            // Randomly decide if this user should be updated
-            if (Math.random() > 0.5) {
-              const updatedUser = { ...user };
-              const updateField = Math.floor(Math.random() * 4);
-
-              // Update a random field
-              switch (updateField) {
-                case 0:
-                  const concurrentDelta = Math.random() > 0.7 ? 1 : -1;
-                  if (updatedUser.concurrents + concurrentDelta >= 0) {
-                    updatedUser.concurrents += concurrentDelta;
-                    updatedCellsMap[`${user.id}-concurrents`] = true;
-                  }
-                  break;
-                case 1:
-                  const hits1mDelta =
-                    Math.floor(Math.random() * 10) *
-                    (Math.random() > 0.7 ? 1 : -1);
-                  if (updatedUser.hits1m + hits1mDelta >= 0) {
-                    updatedUser.hits1m += hits1mDelta;
-                    updatedCellsMap[`${user.id}-hits1m`] = true;
-                  }
-                  break;
-                case 2:
-                  const hits5mDelta =
-                    Math.floor(Math.random() * 20) *
-                    (Math.random() > 0.7 ? 1 : -1);
-                  if (updatedUser.hits5m + hits5mDelta >= 0) {
-                    updatedUser.hits5m += hits5mDelta;
-                    updatedCellsMap[`${user.id}-hits5m`] = true;
-                  }
-                  break;
-                case 3:
-                  const hits15mDelta =
-                    Math.floor(Math.random() * 30) *
-                    (Math.random() > 0.7 ? 1 : -1);
-                  if (updatedUser.hits15m + hits15mDelta >= 0) {
-                    updatedUser.hits15m += hits15mDelta;
-                    updatedCellsMap[`${user.id}-hits15m`] = true;
-                  }
-                  break;
-              }
-
-              // Update the user in the store
-              updateUser(user.id, updatedUser);
-            }
-          });
-        }
-
-        setUpdatedCells(updatedCellsMap);
-        setLastUpdated(new Date());
-
-        // Clear the updated cells after animation completes
-        setTimeout(() => {
-          setUpdatedCells({});
-        }, 1000);
-      }, 3000); // Update every 3 seconds
-
-      return () => {
-        if (updateIntervalRef.current) {
-          clearInterval(updateIntervalRef.current);
-        }
-      };
-    }
-  }, [isLiveUpdating, tokens, updateToken, users, updateUser, activeTab]);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -518,7 +389,7 @@ export default function ManagementPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                onClick={() => toggleBan(user.id)}
+                                onClick={() => {}}
                               >
                                 {user.apiStatus === "banned" ? (
                                   <>
