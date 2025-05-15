@@ -164,7 +164,7 @@ export default function DashboardPage() {
     };
 
     try {
-      const response = await fetch("http://localhost:9926/AdminBanToken", {
+      const response = await fetch("http://localhost:9926/BanToken", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -216,7 +216,7 @@ export default function DashboardPage() {
     };
 
     try {
-      const response = await fetch("http://localhost:9926/AdminUnbanToken", {
+      const response = await fetch("http://localhost:9926/UnbanToken", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -270,13 +270,6 @@ export default function DashboardPage() {
     if (value >= critical) return "text-destructive";
     if (value >= warning) return "text-amber-500";
     return "text-green-500";
-  };
-
-  const getStatusBgColor = (value: number, thresholds: [number, number]) => {
-    const [warning, critical] = thresholds;
-    if (value >= critical) return "bg-destructive/20";
-    if (value >= warning) return "bg-amber-500/20";
-    return "bg-green-500/20";
   };
 
   const formatLastUpdated = () => {
@@ -411,7 +404,7 @@ export default function DashboardPage() {
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(user.hits1m, [10, 20]),
+                            getStatusColor(user.hits1m, [60, 120]),
                             updatedCells[`${user.id}-hits1m`] && "bg-accent"
                           )}
                         >
@@ -420,7 +413,7 @@ export default function DashboardPage() {
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(user.hits5m, [30, 60]),
+                            getStatusColor(user.hits5m, [120, 240]),
                             updatedCells[`${user.id}-hits5m`] && "bg-accent"
                           )}
                         >
@@ -429,7 +422,7 @@ export default function DashboardPage() {
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(user.hits15m, [100, 150]),
+                            getStatusColor(user.hits15m, [300, 500]),
                             updatedCells[`${user.id}-hits15m`] && "bg-accent"
                           )}
                         >
@@ -624,7 +617,7 @@ export default function DashboardPage() {
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(user.hits1m, [10, 20]),
+                            getStatusColor(user.hits1m, [60, 120]),
                             updatedCells[`${user.id}-hits1m`] && "bg-accent"
                           )}
                         >
@@ -633,7 +626,7 @@ export default function DashboardPage() {
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(user.hits5m, [30, 60]),
+                            getStatusColor(user.hits5m, [120, 240]),
                             updatedCells[`${user.id}-hits5m`] && "bg-accent"
                           )}
                         >
@@ -642,7 +635,7 @@ export default function DashboardPage() {
                         <TableCell
                           className={cn(
                             "text-center transition-colors duration-500",
-                            getStatusColor(user.hits15m, [100, 150]),
+                            getStatusColor(user.hits15m, [300, 500]),
                             updatedCells[`${user.id}-hits15m`] && "bg-accent"
                           )}
                         >

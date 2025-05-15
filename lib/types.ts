@@ -6,11 +6,12 @@
  */
 export interface ApiUserToken {
   username: string;
-  token: string;         // This is the unique identifier for the user/token entry
-  status: string;        // e.g., "ok"
+  token: string;        
+  status: string;      
   access_count_1m: number;
-  access_count_3m: number; // Included as it's in your API response
-  access_count_5m: number;
+  access_count_5m: number; 
+  access_count_15m: number;
+  concurrent_users: number;
 }
 
 /**
@@ -18,7 +19,7 @@ export interface ApiUserToken {
  * from the /AdminUsers API endpoint.
  */
 export interface AdminUsersApiResponse {
-  status: number; // The status code within the API response body (e.g., 200)
+  status: number; 
   tokens: ApiUserToken[];
 }
 
@@ -28,14 +29,14 @@ export interface AdminUsersApiResponse {
  * This is often a transformed version of the API data.
  */
 export interface AppUser {
-  id: string;          // Unique identifier, typically mapped from ApiUserToken.token
-  username: string;    // Mapped from ApiUserToken.username
-  apiStatus: string;   // The 'status' field from the API (e.g., "ok")
-  concurrents: number; // UI-specific or simulated data, initialized if not from API
-  hits1m: number;      // Mapped from ApiUserToken.access_count_1m
-  hits5m: number;      // Mapped from ApiUserToken.access_count_5m
-  hits15m: number;     // UI-specific or simulated, initialized if not from this API
-  // banned: boolean;     // Managed by the frontend or another API
+  id: string;          
+  username: string;   
+  apiStatus: string;  
+  concurrents: number; 
+  hits1m: number;      
+  hits5m: number;      
+  hits15m: number;     
+  // banned: boolean;     
 }
 
 // In your types file (e.g., @/lib/types.ts)

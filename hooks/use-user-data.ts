@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AppUser, ApiUserToken, AdminUsersApiResponse } from "@/lib/types"; // Adjust path
 
-const ITEMS_PER_PAGE = 10; // Define items per page
+const ITEMS_PER_PAGE = 10; 
 
 // Helper to transform API data to AppUser
 const transformApiUser = (apiToken: ApiUserToken): AppUser => ({
@@ -11,14 +11,14 @@ const transformApiUser = (apiToken: ApiUserToken): AppUser => ({
   apiStatus: apiToken.status,
   hits1m: apiToken.access_count_1m,
   hits5m: apiToken.access_count_5m,
-  concurrents: 0, // Assuming these are not in ApiUserToken or will be updated elsewhere
-  hits15m: 0,    // Same as above
+  hits15m: apiToken.access_count_15m,
+  concurrents: apiToken.concurrent_users, 
 });
 
 export function useUserData() {
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Start true for initial load
-  const [isRefreshing, setIsRefreshing] = useState(false); // For background updates
+  const [isLoading, setIsLoading] = useState(true); 
+  const [isRefreshing, setIsRefreshing] = useState(false); 
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -44,7 +44,10 @@ export function useUserData() {
         const transformedUsers = data.tokens.map(transformApiUser);
         setAllUsers(transformedUsers);
       } else {
-        throw new Error(data.status.toString() || "Invalid API response structure or error status");
+        throw new Error(
+          data.status.toString() ||
+            "Invalid API response structure or error status"
+        );
       }
     } catch (e: any) {
       console.error("Failed to fetch users:", e);
@@ -81,16 +84,14 @@ export function useUserData() {
     // If allUsers becomes empty and it wasn't an initial load (error or data cleared)
     // you might want to reset to page 1.
     else if (allUsers.length === 0 && !isInitialFetch.current) {
-        setCurrentPage(1);
+      setCurrentPage(1);
     }
   }, [allUsers, currentPage, totalPages]);
-
 
   const usersOnCurrentPage = allUsers.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-
 
   const updateUser = (userId: string, updatedUserData: Partial<AppUser>) => {
     setAllUsers((prevUsers) =>
@@ -103,8 +104,8 @@ export function useUserData() {
   return {
     users: usersOnCurrentPage,
     allUsersCount: allUsers.length,
-    isLoading,      // For initial load
-    isRefreshing,   // For background updates (optional, use if you want a subtle indicator)
+    isLoading, // For initial load
+    isRefreshing, // For background updates (optional, use if you want a subtle indicator)
     error,
     fetchUsers: () => fetchUsers(false), // Expose a way to manually trigger a full refresh
     updateUser,
