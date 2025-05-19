@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/lib/store";
-import { Badge } from "@/components/ui/badge";
 
 export default function Header() {
   const pathname = usePathname();

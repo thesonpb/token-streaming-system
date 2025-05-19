@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AppUser, ApiUserToken, AdminUsersApiResponse } from "@/lib/types"; // Adjust path
 
-const ITEMS_PER_PAGE = 10; 
+const ITEMS_PER_PAGE = 10;
 
 // Helper to transform API data to AppUser
 const transformApiUser = (apiToken: ApiUserToken): AppUser => ({
@@ -12,13 +12,13 @@ const transformApiUser = (apiToken: ApiUserToken): AppUser => ({
   hits1m: apiToken.access_count_1m,
   hits5m: apiToken.access_count_5m,
   hits15m: apiToken.access_count_15m,
-  concurrents: apiToken.concurrent_users, 
+  concurrents: apiToken.concurrent_users,
 });
 
 export function useUserData() {
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true); 
-  const [isRefreshing, setIsRefreshing] = useState(false); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -68,22 +68,17 @@ export function useUserData() {
     // Polling for background updates
     const intervalId = setInterval(() => {
       fetchUsers(true); // Pass true to indicate it's a background refresh
-    }, 200);
+    }, 200); // Consider increasing this interval for production
 
     return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [fetchUsers]); // fetchUsers is memoized by useCallback
+  }, [fetchUsers]);
 
-  // Recalculate total pages whenever allUsers changes
   const totalPages = Math.ceil(allUsers.length / ITEMS_PER_PAGE);
 
-  // Effect to adjust current page if it becomes out of bounds
   useEffect(() => {
     if (allUsers.length > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages || 1); // Go to last valid page or first if no pages
-    }
-    // If allUsers becomes empty and it wasn't an initial load (error or data cleared)
-    // you might want to reset to page 1.
-    else if (allUsers.length === 0 && !isInitialFetch.current) {
+    } else if (allUsers.length === 0 && !isInitialFetch.current) {
       setCurrentPage(1);
     }
   }, [allUsers, currentPage, totalPages]);
@@ -101,16 +96,53 @@ export function useUserData() {
     );
   };
 
+  // New function to apply policy to a token
+  const autoPolicyToToken = useCallback(async (tokenId: string) => {
+    // console.log(`Attempting to apply policy to token: ${tokenId}`); // For debugging
+    try {
+      const response = await fetch(
+        "http://localhost:9926/ApplyPolicyToToken",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // Add any other necessary headers, like Authorization if required
+          },
+          body: JSON.stringify({ token: tokenId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to parse error response" }));
+        console.error(`HTTP error! status: ${response.status}`, errorData);
+        throw new Error(
+          `Failed to apply policy. Status: ${response.status}. Message: ${errorData.message || response.statusText}`
+        );
+      }
+
+      const result = await response.json();
+      // console.log("Policy applied successfully:", result); // For debugging
+      // Optionally, you might want to update the local state or re-fetch users
+      // For example, if applying a policy changes user status that is displayed.
+      fetchUsers(true); // Re-fetch users in the background after applying policy
+      return { success: true, data: result };
+    } catch (e: any) {
+      console.error("Error applying policy to token:", e);
+      setError(e.message || "Failed to apply policy to token."); // Update the main error state
+      return { success: false, error: e.message || "Unknown error" };
+    }
+  }, []); 
   return {
     users: usersOnCurrentPage,
     allUsersCount: allUsers.length,
-    isLoading, // For initial load
-    isRefreshing, // For background updates (optional, use if you want a subtle indicator)
+    isLoading,
+    isRefreshing,
     error,
-    fetchUsers: () => fetchUsers(false), // Expose a way to manually trigger a full refresh
+    fetchUsers: () => fetchUsers(false),
     updateUser,
     currentPage,
     setCurrentPage,
     totalPages,
+    autoPolicyToToken, 
   };
 }

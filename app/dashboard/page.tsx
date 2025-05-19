@@ -36,43 +36,29 @@ import {
   Shield,
   User,
   FileText,
-  Activity,
   Lock,
   Bot,
   LockOpen,
   BotOff,
-  SquareDashedBottomCode,
+  Loader2,
 } from "lucide-react";
-import { useUserStore, useTokenStore } from "@/lib/store";
+import { useUserStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/hooks/use-user-data";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePolicyData } from "@/hooks/use-policy-data"; // Adjust path to your hook
-import { AppPolicy, PolicyActionStatus } from "@/lib/types"; // Adjust path to your types
+import { HistoryLogItem } from "@/lib/types"; // Adjust path to your types
 import { Checkbox } from "@/components/ui/checkbox";
-
-// --- Mock Icons (replace with your actual icon components) ---
-const BotIcon = () => (
-  <span role="img" aria-label="Bot">
-    🤖
-  </span>
-);
-const CrossedOutBotIcon = () => (
-  <span role="img" aria-label="Disabled Bot">
-    🚫🤖
-  </span>
-);
-const DefaultPolicyIcon = () => (
-  <span role="img" aria-label="Settings">
-    ⚙️
-  </span>
-);
-// --- End Mock Icons ---
+import { ScrollArea } from "@/components/ui/scroll-area";
+import useHistory from "@/hooks/use-history";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { username } = useUserStore();
+  const { data, loading, fail, refetch } = useHistory({
+    pollingInterval: 5000,
+  });
   const {
     users,
     allUsersCount,
@@ -83,23 +69,40 @@ export default function DashboardPage() {
     currentPage,
     setCurrentPage,
     totalPages,
+    autoPolicyToToken,
   } = useUserData();
+  const [actionStatus, setActionStatus] = useState<{
+    [key: string]: string | null;
+  }>({});
+  const [isApplyingPolicy, setIsApplyingPolicy] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("token");
-  const [isLiveUpdating, setIsLiveUpdating] = useState(true);
-  const [updatedCells, setUpdatedCells] = useState<{ [key: string]: boolean }>(
-    {}
-  );
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [updatedCells] = useState<{ [key: string]: boolean }>({});
 
   const {
     policies,
-    allPoliciesCount,
     isLoading,
-    isRefreshing,
     error,
-    updatePolicy,
+    fetchPolicies,
+    enablePolicy,
+    disablePolicy,
   } = usePolicyData();
+
+  const [isActionInProgress, setIsActionInProgress] = useState<
+    Record<string, boolean>
+  >({});
+
+  const handleEnablePolicy = async (policyId: string) => {
+    setIsActionInProgress((prev) => ({ ...prev, [policyId]: true }));
+    await enablePolicy(policyId);
+    setIsActionInProgress((prev) => ({ ...prev, [policyId]: false }));
+  };
+
+  const handleDisablePolicy = async (policyId: string) => {
+    setIsActionInProgress((prev) => ({ ...prev, [policyId]: true }));
+    await disablePolicy(policyId);
+    setIsActionInProgress((prev) => ({ ...prev, [policyId]: false }));
+  };
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -112,26 +115,27 @@ export default function DashboardPage() {
     }
   }, [mounted, username, router]);
 
-  const handleToggleEnabled = (
-    policyId: string,
-    currentEnabledStatus: boolean
-  ) => {
-    updatePolicy(policyId, { enabled: !currentEnabledStatus });
-    // The actual API call to persist this change should be handled within the updatePolicy
-    // function in your hook if you want to update the backend.
-  };
+  if (loading && !data) {
+    return <p>Loading history logs...</p>;
+  }
 
-  const getActionIcon = (status: PolicyActionStatus) => {
-    switch (status) {
-      case "auto_policy_type":
-        return <Bot className="h-4 w-4" />;
-      case "demo_policy_type":
-        return <BotOff className="h-4 w-4" />;
-      case "default_policy_type":
-      default:
-        return <SquareDashedBottomCode className="h-4 w-4" />;
-    }
-  };
+  if (fail && !data) {
+    return (
+      <div>
+        <p>Error fetching history logs: {fail.message}</p>
+        <button onClick={() => refetch()}>Try Again</button>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div>
+        <p>No history logs found.</p>
+        <button onClick={() => refetch()}>Refresh</button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <p>Loading mitigation strategies...</p>;
@@ -144,6 +148,44 @@ export default function DashboardPage() {
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleApplyPolicy = async (tokenId: string, username: string) => {
+    setActionStatus((prev) => ({ ...prev, [tokenId]: null })); // Clear previous status for this token
+    setIsApplyingPolicy(tokenId); // Set loading state for this specific action
+
+    console.log(
+      `Attempting to apply policy to token: ${tokenId} for user: ${username}`
+    );
+
+    const result = await autoPolicyToToken(tokenId);
+
+    setIsApplyingPolicy(null); // Clear loading state
+
+    if (result.success) {
+      setActionStatus((prev) => ({
+        ...prev,
+        [tokenId]: `Policy applied successfully to ${username}!`,
+      }));
+      console.log(
+        `Policy applied successfully to token ${tokenId}:`,
+        result.data
+      );
+      // Optionally, you might want to refresh the user list if the policy
+      // changes something visible in the user data (e.g., status)
+      // await fetchUsers(); // This will trigger a full loading state
+      // Or, if the hook's polling is frequent enough, it might update automatically.
+    } else {
+      setActionStatus((prev) => ({
+        ...prev,
+        [tokenId]: `Failed to apply policy to ${username}: ${result.error}`,
+      }));
+      console.error(
+        `Failed to apply policy to token ${tokenId}:`,
+        result.error
+      );
+      // The hook's `error` state (hookError) will also be set by autoPolicyToToken
     }
   };
 
@@ -181,7 +223,6 @@ export default function DashboardPage() {
         throw new Error(errorMessage);
       }
 
-      // API call was successful
       toast({
         title: "Token Banned Successfully",
         description: `Token for user '${username}' has been banned.`,
@@ -199,20 +240,17 @@ export default function DashboardPage() {
     }
   };
 
-  // Add this function inside your ManagementPage component, near handleBanUserToken
-
   const handleUnbanUserToken = async (
     tokenId: string,
     tokenUsername: string
   ) => {
-    // The payload is the same as for banning, according to your images
     const payload = {
       token: tokenId,
-      token_claim: "access-video", // Placeholder, match your actual needs
-      request_useragent: "TestAgent", // Placeholder
-      request_ip: "1.1.1.1", // Placeholder
-      request_hostname: "cdn.test", // Placeholder
-      request_path: "/bad.mp4", // Placeholder
+      token_claim: "access-video",
+      request_useragent: "TestAgent",
+      request_ip: "1.1.1.1",
+      request_hostname: "cdn.test",
+      request_path: "/bad.mp4",
     };
 
     try {
@@ -244,8 +282,6 @@ export default function DashboardPage() {
         variant: "default",
       });
 
-      // Update the local user state to reflect the unban
-      // Assuming "ok" is the status for an active/unbanned token
       updateUser(tokenId, { apiStatus: "ok" });
     } catch (error: any) {
       console.error("Error unbanning token:", error);
@@ -261,10 +297,6 @@ export default function DashboardPage() {
     await fetchUsers(); // Call the fetchUsers from the hook
   };
 
-  const toggleLiveUpdates = () => {
-    setIsLiveUpdating(!isLiveUpdating);
-  };
-
   const getStatusColor = (value: number, thresholds: [number, number]) => {
     const [warning, critical] = thresholds;
     if (value >= critical) return "text-destructive";
@@ -272,25 +304,14 @@ export default function DashboardPage() {
     return "text-green-500";
   };
 
-  const formatLastUpdated = () => {
-    if (!lastUpdated) return "Never";
-
-    const now = new Date();
-    const diffSeconds = Math.floor(
-      (now.getTime() - lastUpdated.getTime()) / 1000
-    );
-
-    if (diffSeconds < 5) return "Just now";
-    if (diffSeconds < 60) return `${diffSeconds} seconds ago`;
-
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    return `${diffMinutes} ${diffMinutes === 1 ? "minute" : "minutes"} ago`;
-  };
-
   if (!mounted || !username) return null;
 
+  const formatLogTimestamp = (isoString: string) => {
+    return new Date(isoString).toLocaleString();
+  };
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl  font-bold">Mitigation Strategy</h1>
       </div>
@@ -314,66 +335,7 @@ export default function DashboardPage() {
         {/* token table */}
         <TabsContent value="token">
           <Card className="border-border bg-card/50 backdrop-blur">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>Token Management</CardTitle>
-                  <CardDescription>
-                    Monitor and manage token usage and suspicious activity
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={isLiveUpdating ? "secondary" : "outline"}
-                    className="text-xs"
-                  >
-                    <Activity
-                      className={cn(
-                        "h-3 w-3 mr-1",
-                        isLiveUpdating && "animate-pulse text-green-500"
-                      )}
-                    />
-                    {isLiveUpdating ? "Live" : "Paused"}
-                  </Badge>
-                  <div className="text-xs text-muted-foreground">
-                    Last updated: {formatLastUpdated()}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleLiveUpdates}
-                  >
-                    <Activity
-                      className={cn(
-                        "h-4 w-4 mr-2",
-                        isLiveUpdating && "text-green-500"
-                      )}
-                    />
-                    {isLiveUpdating ? "Pause Updates" : "Resume Updates"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefreshUsers}
-                    disabled={isLoadingUsers}
-                  >
-                    <RefreshCw
-                      className={cn(
-                        "h-4 w-4 mr-2",
-                        isLoadingUsers && "animate-spin"
-                      )}
-                    />
-                    {isLoadingUsers ? "Refreshing..." : "Refresh Data"}
-                  </Button>
-                </div>
-              </div>
-
+            <CardContent className="pt-10">
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -488,66 +450,7 @@ export default function DashboardPage() {
         {/* User tabs */}
         <TabsContent value="user">
           <Card className="border-border bg-card/50 backdrop-blur">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>
-                    Monitor and manage user accounts and suspicious activity
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={isLiveUpdating ? "secondary" : "outline"}
-                    className="text-xs"
-                  >
-                    <Activity
-                      className={cn(
-                        "h-3 w-3 mr-1",
-                        isLiveUpdating && "animate-pulse text-green-500"
-                      )}
-                    />
-                    {isLiveUpdating ? "Live" : "Paused"}
-                  </Badge>
-                  <div className="text-xs text-muted-foreground">
-                    Last updated: {formatLastUpdated()}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleLiveUpdates}
-                  >
-                    <Activity
-                      className={cn(
-                        "h-4 w-4 mr-2",
-                        isLiveUpdating && "text-green-500"
-                      )}
-                    />
-                    {isLiveUpdating ? "Pause Updates" : "Resume Updates"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefreshUsers}
-                    disabled={isLoadingUsers}
-                  >
-                    <RefreshCw
-                      className={cn(
-                        "h-4 w-4 mr-2",
-                        isLoadingUsers && "animate-spin"
-                      )}
-                    />
-                    {isLoadingUsers ? "Refreshing..." : "Refresh Data"}
-                  </Button>
-                </div>
-              </div>
-
+            <CardContent className="pt-10">
               {isLoadingUsers && (
                 <div className="flex justify-center items-center p-10">
                   <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -659,8 +562,8 @@ export default function DashboardPage() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() =>
-                                alert(`Bot action for ${user.username}`)
-                              } // Placeholder
+                                handleApplyPolicy(user.id, user.username)
+                              }
                               title="Bot Action"
                             >
                               <Bot className="h-4 w-4" />
@@ -742,49 +645,104 @@ export default function DashboardPage() {
         {/* policy table */}
         <TabsContent value="policy">
           <Card className="border-border bg-card/50 backdrop-blur">
-            <CardHeader>
-              <CardTitle>Policy Configuration</CardTitle>
-              <CardDescription>
-                Configure token validation policies and mitigation strategies
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-10">
+              {/* Display a general error message if an action failed after policies were loaded */}
+              {error && policies.length > 0 && (
+                <p className="mb-4 text-sm text-red-600">
+                  Last operation failed: {error}. Data might be momentarily
+                  inconsistent.
+                </p>
+              )}
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Policy ID</TableHead>
-                      <TableHead className="text-center">Policy</TableHead>
-                      <TableHead className="text-center">Enable</TableHead>
-                      <TableHead className="text-center">Action</TableHead>
+                      <TableHead className="w-[250px] sm:w-[300px]">
+                        Policy ID
+                      </TableHead>
+                      <TableHead>Policy Description</TableHead>
+                      <TableHead className="text-center w-[100px]">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-center w-[120px]">
+                        Action
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {policies.length === 0 && !isLoading ? (
+                    {isLoading && policies.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center">
+                        <TableCell colSpan={4} className="h-24 text-center">
+                          <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+                          <span className="ml-2">Loading...</span>
+                        </TableCell>
+                      </TableRow>
+                    ) : policies.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">
                           No policies found.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      policies.map((policy: AppPolicy) => (
-                        <TableRow key={policy.id}>
-                          <TableCell className="font-medium">
+                      policies.map((policy) => (
+                        <TableRow
+                          key={policy.id}
+                          className={
+                            isActionInProgress[policy.id] ? "opacity-60" : ""
+                          }
+                        >
+                          <TableCell
+                            className="font-medium truncate max-w-[250px] sm:max-w-[300px]"
+                            title={policy.id}
+                          >
                             {policy.id}
                           </TableCell>
                           <TableCell>{policy.policyDescription}</TableCell>
                           <TableCell className="text-center">
-                            <Checkbox
-                              checked={policy.enabled}
-                              onCheckedChange={() =>
-                                handleToggleEnabled(policy.id, policy.enabled)
-                              }
-                              aria-label={`Enable policy ${policy.id}`}
-                            />
+                            {/* Checkbox is now purely informational and effectively read-only */}
+                            {isActionInProgress[policy.id] ? (
+                              <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
+                            ) : (
+                              <Checkbox
+                                checked={policy.enabled}
+                                aria-label={`Policy ${policy.id} is ${
+                                  policy.enabled ? "enabled" : "disabled"
+                                }`}
+                                disabled={true}
+                                className="pointer-events-none"
+                              />
+                            )}
                           </TableCell>
-                          <TableCell className="text-center flex justify-center">
-                            {/* {getActionIcon(policy.actionStatus)} */}
-                            <Bot className="h-4 w-4" />
+                          <TableCell className="text-center">
+                            {isActionInProgress[policy.id] ? (
+                              <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
+                            ) : policy.enabled ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDisablePolicy(policy.id)}
+                                aria-label={`Disable policy ${policy.id}`}
+                                title="Disable Policy"
+                                disabled={
+                                  isLoading || isActionInProgress[policy.id]
+                                }
+                              >
+                                <BotOff className="h-5 w-5 text-red-600 hover:text-red-700" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEnablePolicy(policy.id)}
+                                aria-label={`Enable policy ${policy.id}`}
+                                title="Enable Policy"
+                                disabled={
+                                  isLoading || isActionInProgress[policy.id]
+                                }
+                              >
+                                <Bot className="h-5 w-5 text-green-600 hover:text-green-700" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -796,6 +754,77 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* History Log Component */}
+      <Card className="border-border bg-card/50 backdrop-blur">
+        <CardHeader>
+          <CardTitle>History Log</CardTitle>
+          <CardDescription>
+            Recent system events and administrative actions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <h1>
+            {loading && data && (
+              <span style={{ fontSize: "0.7em", marginLeft: "10px" }}>
+                (Updating...)
+              </span>
+            )}{" "}
+            {/* Subtle update indicator */}
+            {fail && data && (
+              <span
+                style={{
+                  fontSize: "0.7em",
+                  marginLeft: "10px",
+                  color: "orange",
+                }}
+              >
+                (Update failed, showing stale data)
+              </span>
+            )}
+          </h1>
+          <Button
+            onClick={() => refetch()}
+            style={{ marginBottom: "10px" }}
+            disabled={loading}
+            variant="outline"
+            className="text-sm py-1.5"
+          >
+            {loading && !data ? "Loading..." : "Refresh Logs"}
+          </Button>
+          <ScrollArea className="h-72 w-full rounded-md border p-4 bg-background/30">
+            {data.length > 0 ? (
+              <ul className="space-y-3">
+                {data.map((log: HistoryLogItem) => (
+                  <li key={log.id} className="text-sm">
+                    <div className="flex justify-between items-start">
+                      <p className="font-medium text-foreground/90">
+                        <span className="text-primary font-semibold">
+                          {log.token}
+                        </span>
+                        : {log.type} by {log.by}
+                      </p>
+
+                      <p className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatLogTimestamp(log.timestamp)}
+                      </p>
+                    </div>
+                    {log.details && (
+                      <p className="text-xs text-muted-foreground ml-2">
+                        - {log.details || "N/A"}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center">
+                No history logs available.
+              </p>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,26 +1,22 @@
 // hooks/use-policy-data.ts
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   AppPolicy,
   ApiPolicy,
   PolicyApiResponse,
   PolicyActionStatus,
-} from "@/lib/types"; // Adjust this path to where your types are defined
+} from "@/lib/types"; 
 
-const ITEMS_PER_PAGE = 10; // Define items per page, can be made dynamic
 
-// Helper to transform API data to AppPolicy
 const transformApiPolicy = (apiPolicy: ApiPolicy): AppPolicy => {
   let actionStatus: PolicyActionStatus = 'default_policy_type';
 
   // Determine actionStatus based on 'id' prefix or other API fields if available
-  // This logic attempts to match the UI screenshot behavior
   if (apiPolicy.id.startsWith('auto_')) {
     actionStatus = 'auto_policy_type';
   } else if (apiPolicy.id.startsWith('demo_')) {
     actionStatus = 'demo_policy_type';
   }
-  // You might have more specific logic if the API provided a direct 'action_type' field
 
   return {
     id: apiPolicy.id,
@@ -32,20 +28,11 @@ const transformApiPolicy = (apiPolicy: ApiPolicy): AppPolicy => {
 
 export function usePolicyData() {
   const [allPolicies, setAllPolicies] = useState<AppPolicy[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Start true for initial load
-  const [isRefreshing, setIsRefreshing] = useState(false); // For background updates
+  const [isLoading, setIsLoading] = useState(true); // For initial load and manual refreshes
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  // const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE); // Uncomment if you want dynamic itemsPerPage
 
-  const isInitialFetch = useRef(true);
-
-  const fetchPolicies = useCallback(async (isBackgroundRefresh = false) => {
-    if (!isBackgroundRefresh) {
-      setIsLoading(true);
-    } else {
-      setIsRefreshing(true);
-    }
+  const fetchPolicies = useCallback(async () => {
+    setIsLoading(true);
     setError(null);
 
     try {
@@ -58,8 +45,6 @@ export function usePolicyData() {
       if (data.status === 200 && data.policies) {
         const transformedPolicies = data.policies.map(transformApiPolicy);
         setAllPolicies(transformedPolicies);
-        // Only reset to first page on the very first successful fetch if desired,
-        // or if the current page becomes invalid (handled by another useEffect).
       } else {
         throw new Error(data.message || "Invalid API response structure or error status");
       }
@@ -69,70 +54,92 @@ export function usePolicyData() {
       // Optionally clear policies on error:
       // setAllPolicies([]);
     } finally {
-      if (!isBackgroundRefresh) {
-        setIsLoading(false);
-      }
-      setIsRefreshing(false);
-      isInitialFetch.current = false; // Mark initial fetch as done
+      setIsLoading(false);
     }
-  // }, [itemsPerPage]); // Add itemsPerPage to dependencies if it's dynamic and affects fetch (e.g., server-side pagination)
-  }, []); // No dependencies needed if itemsPerPage is constant and not used in fetch URL
+  }, []); // Empty dependency array as setters from useState are stable
 
   useEffect(() => {
     // Initial fetch
-    fetchPolicies(false);
-
-    // Polling for background updates
-    const intervalId = setInterval(() => {
-      fetchPolicies(true); // Pass true to indicate it's a background refresh
-    }, 2000); // Poll every 2 seconds
-
-    return () => clearInterval(intervalId); // Cleanup on unmount
+    fetchPolicies();
+    // Polling and pagination related logic removed
   }, [fetchPolicies]); // fetchPolicies is memoized by useCallback
 
-  // Recalculate total pages whenever allPolicies or itemsPerPage changes
-  // const T_ITEMS_PER_PAGE = itemsPerPage; // Use this if itemsPerPage is dynamic
-  const T_ITEMS_PER_PAGE = ITEMS_PER_PAGE; // Use this if itemsPerPage is constant
-  const totalPages = Math.ceil(allPolicies.length / T_ITEMS_PER_PAGE);
+  const enablePolicy = useCallback(async (policyId: string) => {
+    setError(null); // Clear previous errors
+    // Consider a specific loading state for the item if UI needs it,
+    // otherwise, the global isLoading might be too disruptive for single item actions.
+    try {
+      const response = await fetch("http://localhost:9926/PolicyEnable", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: policyId }),
+      });
 
-  // Effect to adjust current page if it becomes out of bounds
-  useEffect(() => {
-    if (allPolicies.length > 0 && currentPage > totalPages) {
-      setCurrentPage(totalPages || 1); // Go to last valid page or first if no pages
-    } else if (allPolicies.length === 0 && !isInitialFetch.current) {
-        setCurrentPage(1); // Reset to page 1 if list becomes empty after initial load
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to enable policy and parse error response" }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      // const responseData = await response.json(); // e.g. {"status": 200, "message": "Policy ... is now enabled"}
+      // console.log("Enable policy response:", responseData.message);
+
+
+      // Optimistically update local state after successful API call
+      setAllPolicies((prevPolicies) =>
+        prevPolicies.map((policy) =>
+          policy.id === policyId ? { ...policy, enabled: true } : policy
+        )
+      );
+    } catch (e: any) {
+      console.error(`Failed to enable policy ${policyId}:`, e);
+      setError(e.message || "Failed to enable policy.");
+      // Optionally, trigger a full refresh to ensure consistency if an error occurs
+      // await fetchPolicies(); 
     }
-  // }, [allPolicies, currentPage, totalPages, itemsPerPage]); // Add itemsPerPage if it's dynamic
-  }, [allPolicies, currentPage, totalPages]);
+  }, [setAllPolicies, setError /* fetchPolicies if used for error recovery */]);
 
+  const disablePolicy = useCallback(async (policyId: string) => {
+    setError(null); // Clear previous errors
+    try {
+      const response = await fetch("http://localhost:9926/PolicyDisable", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: policyId }),
+      });
 
-  const policiesOnCurrentPage = allPolicies.slice(
-    (currentPage - 1) * T_ITEMS_PER_PAGE,
-    currentPage * T_ITEMS_PER_PAGE
-  );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to disable policy and parse error response" }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
 
-  // Update policy (local state for now, API call to be added for persistence)
-  const updatePolicy = (policyId: string, updatedPolicyData: Partial<AppPolicy>) => {
-    setAllPolicies((prevPolicies) =>
-      prevPolicies.map((policy) =>
-        policy.id === policyId ? { ...policy, ...updatedPolicyData } : policy
-      )
-    );
-    // TODO: Implement API call to persist the 'enabled' (active) state change.
-    // The API call would likely target an endpoint like:
-    // PATCH http://localhost:9926/PolicyResource/{policyId}
-    // with a body like: { "active": newEnabledState }
-    // where newEnabledState is updatedPolicyData.enabled
-    console.log(`Policy ${policyId} updated locally. New data:`, updatedPolicyData);
-  };
+      // const responseData = await response.json();
+      // console.log("Disable policy response:", responseData.message);
+
+      // Optimistically update local state after successful API call
+      setAllPolicies((prevPolicies) =>
+        prevPolicies.map((policy) =>
+          policy.id === policyId ? { ...policy, enabled: false } : policy
+        )
+      );
+    } catch (e: any) {
+      console.error(`Failed to disable policy ${policyId}:`, e);
+      setError(e.message || "Failed to disable policy.");
+      // Optionally, trigger a full refresh to ensure consistency
+      // await fetchPolicies();
+    }
+  }, [setAllPolicies, setError /* fetchPolicies if used for error recovery */]);
 
   return {
-    policies: policiesOnCurrentPage,
+    policies: allPolicies, // Return all policies directly (pagination removed)
     allPoliciesCount: allPolicies.length,
-    isLoading,      // For initial load
-    isRefreshing,   // For background updates (optional, use if you want a subtle indicator)
+    isLoading,      // For initial load and manual full refresh
     error,
-    fetchPolicies: () => fetchPolicies(false), // Expose a way to manually trigger a full refresh
-    updatePolicy
+    fetchPolicies, // Expose a way to manually trigger a full refresh
+    enablePolicy,
+    disablePolicy,
   };
 }

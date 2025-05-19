@@ -1,4 +1,18 @@
-// lib/types.ts
+// src/types/history.ts (or wherever you keep your types)
+export interface HistoryLogItem {
+  timestamp: string;
+  type: string;
+  token: string;
+  reason: string;
+  by: string;
+  details: string;
+  id: string;
+}
+
+export interface HistoryApiResponse {
+  status: number;
+  data: HistoryLogItem[];
+}
 
 /**
  * Represents the structure of a single token object
