@@ -51,6 +51,7 @@ import { HistoryLogItem } from "@/lib/types"; // Adjust path to your types
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useHistory from "@/hooks/use-history";
+import useGeo from "@/hooks/use-geo";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -759,9 +760,6 @@ export default function DashboardPage() {
       <Card className="border-border bg-card/50 backdrop-blur">
         <CardHeader>
           <CardTitle>History Log</CardTitle>
-          <CardDescription>
-            Recent system events and administrative actions.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <h1>
