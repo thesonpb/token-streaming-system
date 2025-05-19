@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LogOut, User } from "lucide-react";
+import { LogOut, MapPinned, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/lib/store";
 
@@ -37,7 +36,7 @@ export default function Header() {
 
               <Button variant="outline" className="text-sm py-1.5" asChild>
                 <Link href="/geo">
-                  <User className="h-4 w-4 mr-1" />
+                  <MapPinned className="h-4 w-4 mr-1" />
                   GEO
                 </Link>
               </Button>
