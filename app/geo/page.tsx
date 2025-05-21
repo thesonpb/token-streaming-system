@@ -74,7 +74,7 @@ export default function GeoPage() {
                     Update GEO controls
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-                    Enter locations separated by commas (e.g., US, VN, CA).
+                    Countries to allow (2 letter country code comma separated list for demo)
                   </p>
                   <div className="space-y-4">
                     <label htmlFor="locations-input" className="sr-only">
@@ -94,7 +94,7 @@ export default function GeoPage() {
                       disabled={
                         isUpdating || isRefreshing || !inputLocations.trim()
                       }
-                      className="w-full px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-md shadow-sm transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:bg-sky-400 dark:disabled:bg-sky-700/60 disabled:cursor-not-allowed"
+                      className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md shadow-sm transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:bg-sky-400 dark:disabled:bg-sky-700/60 disabled:cursor-not-allowed"
                     >
                       {isUpdating ? "Updating..." : "Enable Locations"}
                     </button>

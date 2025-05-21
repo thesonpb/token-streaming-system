@@ -785,14 +785,10 @@ export default function DashboardPage() {
                   <li key={log.id} className="text-sm">
                     <div className="flex justify-between items-start">
                       <p className="font-medium text-foreground/90">
-                        <span className="text-primary font-semibold">
-                          {log.id}
+                        <span>
+                          {formatLogTimestamp(log.timestamp)} {"> "}
                         </span>
-                        : {log.details}
-                      </p>
-
-                      <p className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatLogTimestamp(log.timestamp)}
+                        {log.details}
                       </p>
                     </div>
                   </li>
