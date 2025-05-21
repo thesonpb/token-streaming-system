@@ -73,7 +73,7 @@ export function useUserData() {
         // Polling for background updates
         const intervalId = setInterval(() => {
             fetchUsers(true); // Pass true to indicate it's a background refresh
-        }, 200); // Consider increasing this interval for production
+        }, 2000); // Consider increasing this interval for production
 
         return () => clearInterval(intervalId); // Cleanup on unmount
     }, [fetchUsers]);
