@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -105,7 +104,6 @@ export default function DashboardPage() {
     setIsActionInProgress((prev) => ({ ...prev, [policyId]: false }));
   };
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -149,44 +147,6 @@ export default function DashboardPage() {
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handleApplyPolicy = async (tokenId: string, username: string) => {
-    setActionStatus((prev) => ({ ...prev, [tokenId]: null })); // Clear previous status for this token
-    setIsApplyingPolicy(tokenId); // Set loading state for this specific action
-
-    console.log(
-      `Attempting to apply policy to token: ${tokenId} for user: ${username}`
-    );
-
-    const result = await autoPolicyToToken(tokenId);
-
-    setIsApplyingPolicy(null); // Clear loading state
-
-    if (result.success) {
-      setActionStatus((prev) => ({
-        ...prev,
-        [tokenId]: `Policy applied successfully to ${username}!`,
-      }));
-      console.log(
-        `Policy applied successfully to token ${tokenId}:`,
-        result.data
-      );
-      // Optionally, you might want to refresh the user list if the policy
-      // changes something visible in the user data (e.g., status)
-      // await fetchUsers(); // This will trigger a full loading state
-      // Or, if the hook's polling is frequent enough, it might update automatically.
-    } else {
-      setActionStatus((prev) => ({
-        ...prev,
-        [tokenId]: `Failed to apply policy to ${username}: ${result.error}`,
-      }));
-      console.error(
-        `Failed to apply policy to token ${tokenId}:`,
-        result.error
-      );
-      // The hook's `error` state (hookError) will also be set by autoPolicyToToken
     }
   };
 
