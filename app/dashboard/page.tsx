@@ -46,8 +46,8 @@ import { useUserStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useUserData } from "@/hooks/use-user-data";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { usePolicyData } from "@/hooks/use-policy-data"; // Adjust path to your hook
-import { HistoryLogItem } from "@/lib/types"; // Adjust path to your types
+import { usePolicyData } from "@/hooks/use-policy-data";
+import { HistoryLogItem } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useHistory from "@/hooks/use-history";
@@ -563,18 +563,6 @@ export default function DashboardPage() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() =>
-                                handleApplyPolicy(user.id, user.username)
-                              }
-                              title="Bot Action"
-                            >
-                              <Bot className="h-4 w-4" />
-                              <span className="sr-only">Bot Action</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() =>
                                 handleBanUserToken(user.id, user.username)
                               }
                               disabled={user.apiStatus === "banned"} // Disable if already banned
@@ -658,7 +646,7 @@ export default function DashboardPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[250px] sm:w-[300px]">
+                      <TableHead className="w-[180px] sm:w-[250px]">
                         Policy ID
                       </TableHead>
                       <TableHead>Policy Description</TableHead>
@@ -798,20 +786,15 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-start">
                       <p className="font-medium text-foreground/90">
                         <span className="text-primary font-semibold">
-                          {log.token}
+                          {log.id}
                         </span>
-                        : {log.type} by {log.by}
+                        : {log.details}
                       </p>
 
                       <p className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatLogTimestamp(log.timestamp)}
                       </p>
                     </div>
-                    {log.details && (
-                      <p className="text-xs text-muted-foreground ml-2">
-                        - {log.details || "N/A"}
-                      </p>
-                    )}
                   </li>
                 ))}
               </ul>

@@ -44,44 +44,18 @@ export default function GeoPage() {
             <div className="w-full max-w-2xl">
               <div className="bg-white dark:bg-slate-800 shadow-xl rounded-lg overflow-hidden">
                 <div className="p-6 sm:p-8">
-                  <div className="flex justify-between items-center mb-6">
+                  <div className="flex justify-between items-center mb-1">
                     <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200">
-                      Current Locations
+                      Current GEO controls
                     </h2>
-                    <button
-                      onClick={handleRefresh}
-                      disabled={isRefreshing || isUpdating}
-                      className="px-4 py-2 text-sm font-medium text-sky-600 dark:text-sky-400 bg-sky-100 dark:bg-sky-700/30 hover:bg-sky-200 dark:hover:bg-sky-700/50 rounded-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {isRefreshing ? "Refreshing..." : "Refresh"}
-                    </button>
                   </div>
-
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                    when a new token is issued, it will allow these locations:
+                  </p>
                   {locations.length > 0 ? (
-                    <ul className="space-y-3">
+                    <ul className="list-disc pl-5">
                       {locations.map((loc, index) => (
-                        <li
-                          key={index}
-                          className="flex items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md"
-                        >
-                          <span className="text-indigo-500 dark:text-indigo-400 mr-3">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </span>
-                          <span className="text-lg font-medium text-slate-700 dark:text-slate-200">
-                            {loc}
-                          </span>
-                        </li>
+                        <li key={index}>{loc}</li>
                       ))}
                     </ul>
                   ) : (
@@ -93,15 +67,11 @@ export default function GeoPage() {
                   )}
                 </div>
 
-                {/* Separator - could use Radix Separator here */}
                 <hr className="border-slate-200 dark:border-slate-700" />
-                {/* Example with Radix Separator:
-          <SeparatorPrimitive.Root className="h-px bg-slate-200 dark:bg-slate-700 data-[orientation=horizontal]:my-6" />
-          */}
 
                 <div className="p-6 sm:p-8">
                   <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Update Locations
+                    Update GEO controls
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
                     Enter locations separated by commas (e.g., US, VN, CA).
@@ -126,7 +96,7 @@ export default function GeoPage() {
                       }
                       className="w-full px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-md shadow-sm transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 disabled:bg-sky-400 dark:disabled:bg-sky-700/60 disabled:cursor-not-allowed"
                     >
-                      {isUpdating ? "Updating..." : "Save Changes"}
+                      {isUpdating ? "Updating..." : "Enable Locations"}
                     </button>
                   </div>
                 </div>
