@@ -1,8 +1,8 @@
 // src/hooks/useGeo.ts
-import { AUTH } from "@/constants";
+import { API_BASE_URL, AUTH } from "@/constants";
 import { useState, useEffect, useCallback } from "react";
 
-const API_URL = "http://localhost:9926/GeoLocation";
+const API_URL = `${API_BASE_URL}/GeoLocation`;
 
 interface GeoGetResponse {
     status: number;

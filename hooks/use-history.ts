@@ -1,9 +1,9 @@
 // src/hooks/useHistory.ts
 import { useState, useEffect, useCallback, useRef } from "react";
 import { HistoryLogItem, HistoryApiResponse } from "../lib/types"; // Ensure this path is correct
-import { AUTH } from "@/constants";
+import { API_BASE_URL, AUTH } from "@/constants";
 
-const API_URL = "http://localhost:9926/HistoryLogs";
+const API_URL = `${API_BASE_URL}/HistoryLogs`;
 
 interface UseHistoryState {
     data: HistoryLogItem[] | null;

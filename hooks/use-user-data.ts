@@ -1,7 +1,7 @@
 // hooks/use-user-data.ts
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AppUser, ApiUserToken, AdminUsersApiResponse } from "@/lib/types"; // Adjust path
-import { AUTH } from "@/constants";
+import { API_BASE_URL, AUTH } from "@/constants";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -35,7 +35,7 @@ export function useUserData() {
         setError(null);
 
         try {
-            const response = await fetch("http://localhost:9926/AdminUsers", {
+            const response = await fetch(`${API_BASE_URL}/AdminUsers`, {
                 headers: {
                     Authorization: `Basic ${AUTH}`,
                 },
@@ -105,18 +105,15 @@ export function useUserData() {
     const autoPolicyToToken = useCallback(async (tokenId: string) => {
         // console.log(`Attempting to apply policy to token: ${tokenId}`); // For debugging
         try {
-            const response = await fetch(
-                "http://localhost:9926/ApplyPolicyToToken",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Basic ${AUTH}`,
-                        // Add any other necessary headers, like Authorization if required
-                    },
-                    body: JSON.stringify({ token: tokenId }),
-                }
-            );
+            const response = await fetch(`${API_BASE_URL}/ApplyPolicyToToken`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Basic ${AUTH}`,
+                    // Add any other necessary headers, like Authorization if required
+                },
+                body: JSON.stringify({ token: tokenId }),
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({

@@ -6,7 +6,7 @@ import {
     PolicyApiResponse,
     PolicyActionStatus,
 } from "@/lib/types";
-import { AUTH } from "@/constants";
+import { API_BASE_URL, AUTH } from "@/constants";
 
 const transformApiPolicy = (apiPolicy: ApiPolicy): AppPolicy => {
     let actionStatus: PolicyActionStatus = "default_policy_type";
@@ -36,14 +36,11 @@ export function usePolicyData() {
         setError(null);
 
         try {
-            const response = await fetch(
-                "http://localhost:9926/PolicyResource",
-                {
-                    headers: {
-                        Authorization: `Basic ${AUTH}`,
-                    },
-                }
-            );
+            const response = await fetch(`${API_BASE_URL}/PolicyResource`, {
+                headers: {
+                    Authorization: `Basic ${AUTH}`,
+                },
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -81,17 +78,14 @@ export function usePolicyData() {
             // Consider a specific loading state for the item if UI needs it,
             // otherwise, the global isLoading might be too disruptive for single item actions.
             try {
-                const response = await fetch(
-                    "http://localhost:9926/PolicyEnable",
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Basic ${AUTH}`,
-                        },
-                        body: JSON.stringify({ id: policyId }),
-                    }
-                );
+                const response = await fetch(`${API_BASE_URL}/PolicyEnable`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Basic ${AUTH}`,
+                    },
+                    body: JSON.stringify({ id: policyId }),
+                });
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({
@@ -132,17 +126,14 @@ export function usePolicyData() {
         async (policyId: string) => {
             setError(null); // Clear previous errors
             try {
-                const response = await fetch(
-                    "http://localhost:9926/PolicyDisable",
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Basic ${AUTH}`,
-                        },
-                        body: JSON.stringify({ id: policyId }),
-                    }
-                );
+                const response = await fetch(`${API_BASE_URL}/PolicyDisable`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Basic ${AUTH}`,
+                    },
+                    body: JSON.stringify({ id: policyId }),
+                });
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({
