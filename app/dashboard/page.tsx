@@ -156,7 +156,7 @@ export default function DashboardPage() {
         };
 
         try {
-            const response = await fetch("${BASE_URL}/BanToken", {
+            const response = await fetch(`${API_BASE_URL}/BanToken`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
